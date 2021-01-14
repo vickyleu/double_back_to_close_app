@@ -24,9 +24,7 @@ class DoubleBackToCloseApp extends StatefulWidget {
     Key key,
     @required this.snackBar,
     @required this.child,
-  })  : assert(snackBar != null),
-        assert(child != null),
-        super(key: key);
+  }) : super(key: key);
 
   @override
   _DoubleBackToCloseAppState createState() => _DoubleBackToCloseAppState();
@@ -47,10 +45,12 @@ class _DoubleBackToCloseAppState extends State<DoubleBackToCloseApp> {
   ///
   /// This is not quite accurate since the snack-bar could've been dismissed by
   /// the user, so this algorithm needs to be improved, as described in #2.
-  bool get _isSnackBarVisible =>
-      (_lastTimeBackButtonWasTapped != null) &&
-      (widget.snackBar.duration >
-          DateTime.now().difference(_lastTimeBackButtonWasTapped));
+  bool get _isSnackBarVisible {
+    final lastTimeBackButtonWasTapped = _lastTimeBackButtonWasTapped;
+    return (lastTimeBackButtonWasTapped != null) &&
+        (widget.snackBar.duration >
+            DateTime.now().difference(lastTimeBackButtonWasTapped));
+  }
 
   /// Returns whether the next back navigation of this route will be handled
   /// internally.
@@ -59,11 +59,14 @@ class _DoubleBackToCloseAppState extends State<DoubleBackToCloseApp> {
   /// local-history of the current route, in order to handle pop. This is done
   /// by [Drawer], for example, so it can close on pop.
   bool get _willHandlePopInternally =>
-      ModalRoute.of(context).willHandlePopInternally;
+      ModalRoute.of(context)?.willHandlePopInternally ?? false;
 
   @override
   Widget build(BuildContext context) {
-    _ensureThatContextContainsScaffold();
+    assert(() {
+      _ensureThatContextContainsScaffold();
+      return true;
+    }());
 
     if (_isAndroid) {
       return WillPopScope(
@@ -81,14 +84,14 @@ class _DoubleBackToCloseAppState extends State<DoubleBackToCloseApp> {
       return true;
     } else {
       _lastTimeBackButtonWasTapped = DateTime.now();
-      ScaffoldMessenger.of(context).showSnackBar(widget.snackBar);
+      Scaffold.of(context).showSnackBar(widget.snackBar);
       return false;
     }
   }
 
   /// Throws a [FlutterError] if this widget was not wrapped in a [Scaffold].
   void _ensureThatContextContainsScaffold() {
-    if (Scaffold.maybeOf(context) == null) {
+    if (Scaffold.of(context,nullOk: true) == null) {
       throw FlutterError(
         '`DoubleBackToCloseApp` must be wrapped in a `Scaffold`.',
       );
